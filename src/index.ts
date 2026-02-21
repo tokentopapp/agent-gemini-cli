@@ -1,6 +1,4 @@
 import * as fs from 'fs';
-import * as os from 'os';
-import * as path from 'path';
 import {
   createAgentPlugin,
   type AgentFetchContext,
@@ -8,9 +6,10 @@ import {
   type SessionParseOptions,
   type SessionUsageData,
 } from '@tokentop/plugin-sdk';
-
-// TODO: Implement session parsing for Gemini CLI
-// See @tokentop/agent-opencode for a complete reference implementation.
+import { CACHE_TTL_MS, SESSION_AGGREGATE_CACHE_MAX, sessionAggregateCache, sessionCache, sessionMetadataIndex } from './cache.ts';
+import { parseSessionsFromProjects } from './parser.ts';
+import { GEMINI_CLI_HOME, GEMINI_CLI_TMP_PATH } from './paths.ts';
+import { RECONCILIATION_INTERVAL_MS, startActivityWatch, stopActivityWatch } from './watcher.ts';
 
 const geminiCliAgentPlugin = createAgentPlugin({
   id: 'gemini-cli',
@@ -33,24 +32,43 @@ const geminiCliAgentPlugin = createAgentPlugin({
   agent: {
     name: 'Gemini CLI',
     command: 'gemini',
-    configPath: path.join(os.homedir(), '.gemini'),
-    sessionPath: path.join(os.homedir(), '.gemini'),
+    configPath: GEMINI_CLI_HOME,
+    sessionPath: GEMINI_CLI_TMP_PATH,
   },
 
   capabilities: {
-    sessionParsing: false,
+    sessionParsing: true,
     authReading: false,
-    realTimeTracking: false,
+    realTimeTracking: true,
     multiProvider: false,
   },
 
-  async isInstalled(_ctx: PluginContext): Promise<boolean> {
-    return fs.existsSync(path.join(os.homedir(), '.gemini'));
+  startActivityWatch(_ctx: PluginContext, callback): void {
+    startActivityWatch(callback);
   },
 
-  async parseSessions(_options: SessionParseOptions, _ctx: AgentFetchContext): Promise<SessionUsageData[]> {
-    return [];
+  stopActivityWatch(_ctx: PluginContext): void {
+    stopActivityWatch();
+  },
+
+  async isInstalled(_ctx: PluginContext): Promise<boolean> {
+    return fs.existsSync(GEMINI_CLI_TMP_PATH) || fs.existsSync(GEMINI_CLI_HOME);
+  },
+
+  async parseSessions(options: SessionParseOptions, ctx: AgentFetchContext): Promise<SessionUsageData[]> {
+    return parseSessionsFromProjects(options, ctx);
   },
 });
+
+export {
+  CACHE_TTL_MS,
+  GEMINI_CLI_HOME,
+  GEMINI_CLI_TMP_PATH,
+  RECONCILIATION_INTERVAL_MS,
+  SESSION_AGGREGATE_CACHE_MAX,
+  sessionAggregateCache,
+  sessionCache,
+  sessionMetadataIndex,
+};
 
 export default geminiCliAgentPlugin;
