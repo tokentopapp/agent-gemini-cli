@@ -5,6 +5,10 @@
       "release-type": "node",
       "include-component-in-tag": false,
       "draft": true,
+      "bootstrap-sha": "3ebe8ee762ec85a09a8ccf79abb9d902b497f889",
+      "release-type": "node",
+      "include-component-in-tag": false,
+      "draft": true,
       "bump-minor-pre-major": true,
       "bump-patch-for-minor-pre-major": false,
       "changelog-sections": [
