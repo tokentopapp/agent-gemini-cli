@@ -1,74 +1,27 @@
-import * as fs from 'fs';
-import {
-  createAgentPlugin,
-  type AgentFetchContext,
-  type PluginContext,
-  type SessionParseOptions,
-  type SessionUsageData,
-} from '@tokentop/plugin-sdk';
-import { CACHE_TTL_MS, SESSION_AGGREGATE_CACHE_MAX, sessionAggregateCache, sessionCache, sessionMetadataIndex } from './cache.ts';
-import { parseSessionsFromProjects } from './parser.ts';
-import { GEMINI_CLI_HOME, GEMINI_CLI_TMP_PATH } from './paths.ts';
-import { RECONCILIATION_INTERVAL_MS, startActivityWatch, stopActivityWatch } from './watcher.ts';
-
-const geminiCliAgentPlugin = createAgentPlugin({
-  id: 'gemini-cli',
-  type: 'agent',
-  name: 'Gemini CLI',
-  version: '0.1.0',
-
-  meta: {
-    description: 'Gemini CLI session tracking',
-    homepage: 'https://github.com/google-gemini/gemini-cli',
-  },
-
-  permissions: {
-    filesystem: {
-      read: true,
-      paths: ['~/.gemini'],
-    },
-  },
-
-  agent: {
-    name: 'Gemini CLI',
-    command: 'gemini',
-    configPath: GEMINI_CLI_HOME,
-    sessionPath: GEMINI_CLI_TMP_PATH,
-  },
-
-  capabilities: {
-    sessionParsing: true,
-    authReading: false,
-    realTimeTracking: true,
-    multiProvider: false,
-  },
-
-  startActivityWatch(_ctx: PluginContext, callback): void {
-    startActivityWatch(callback);
-  },
-
-  stopActivityWatch(_ctx: PluginContext): void {
-    stopActivityWatch();
-  },
-
-  async isInstalled(_ctx: PluginContext): Promise<boolean> {
-    return fs.existsSync(GEMINI_CLI_TMP_PATH) || fs.existsSync(GEMINI_CLI_HOME);
-  },
-
-  async parseSessions(options: SessionParseOptions, ctx: AgentFetchContext): Promise<SessionUsageData[]> {
-    return parseSessionsFromProjects(options, ctx);
-  },
-});
-
+/**
+ * @deprecated Use @tokentop/agent-gemini instead.
+ *
+ * This package is a thin wrapper that re-exports @tokentop/agent-gemini.
+ * Gemini CLI and Antigravity write identical session files to ~/.gemini/tmp/
+ * using the same ConversationRecord format — there is no way to distinguish
+ * which tool created a given session. The canonical plugin handles both.
+ */
 export {
+  default,
   CACHE_TTL_MS,
-  GEMINI_CLI_HOME,
-  GEMINI_CLI_TMP_PATH,
+  GEMINI_HOME,
+  GEMINI_SESSIONS_PATH,
+  GEMINI_OAUTH_CREDS_PATH,
+  ANTIGRAVITY_ACCOUNTS_PATH,
   RECONCILIATION_INTERVAL_MS,
   SESSION_AGGREGATE_CACHE_MAX,
   sessionAggregateCache,
   sessionCache,
   sessionMetadataIndex,
-};
+} from '@tokentop/agent-gemini';
 
-export default geminiCliAgentPlugin;
+/** @deprecated Use GEMINI_HOME from @tokentop/agent-gemini instead. */
+export { GEMINI_HOME as GEMINI_CLI_HOME } from '@tokentop/agent-gemini';
+
+/** @deprecated Use GEMINI_SESSIONS_PATH from @tokentop/agent-gemini instead. */
+export { GEMINI_SESSIONS_PATH as GEMINI_CLI_TMP_PATH } from '@tokentop/agent-gemini';
